@@ -1,39 +1,183 @@
-# PT_Demo_AwsSqsQueueAndLambda
+# PT_Demo_AWS
 
-## Content
+## Contents
 
 - [General Information](#general-information)
-- [Architecture](#architecture)
-- [Setup](#setup)
-  - [AWS SQS Queue Setup](#aws-sqs-queue-setup)
-  - [Web API Setup](#web-api-setup)
-  - [AWS Lambda Setup](#aws-lambda-setup)
-
----
-
-<a name="general-information" ></a>
+- [SQS Queue Web API Producer with Web API Consumer](#sqs-queue-web-api-producer-with-web-api-consumer)
+    - [Setup](#setup)
+        - [Create SQS Queue in AWS](#create-sqs-queue)
+        - [Create (Secret)AccessKey in AWS](#create-secretaccesskey-in-aws)
+        - [Create MySqsQueuePublisher.API](#create-publisher-api)
+        - [Create MySqsQueueConsumer.API](#create-consumer-api)
+        - [Test](#test)
+- [SQS Queue Web API Producer with Lambda Consumer](#sqs-queue-web-api-producer-with-lambda-consumer)
+    - [Architecture](#architecture)
+    - [Setup](#setup-1)
+        - [AWS SQS Queue Setup](#aws-sqs-queue-setup)
+        - [Web API Setup](#web-api-setup)
+        - [AWS Lambda Setup](#aws-lambda-setup)
 
 ## General Information
 
-PT_Demo_AwsSqsQueueAndLambda is a demo project to test both Lambdas and SQS Queues.
+PT_Demo_AWS is a demo project to test both Lambdas and SQS Queues.
 
----
+## SQS Queue Web API Producer with Web API Consumer
 
-<a name="architecture" ></a>
+### Setup
 
-## Architecture
+#### Create SQS Queue in AWS
+
+In AWS, create new SQS Queue `my-sqs-queue-test` in AWS:
+- Type: `Standard`
+- Configuration: `default`
+- Encryption
+    - Server-side encryption: `Disabled`
+- Access policy
+    - Choose method: `Basic`
+    - Define who can send messages to the queue: `Only the queue owner`
+    - Define who can receive messages from the queue: `Only the queue owner`
+- Dead-Letter Queue: `disabled`
+
+[Create Queue]
+
+#### Create (Secret)AccessKey in AWS
+
+In AWS, go to IAM > Dashboard > [Manage Access Keys] > Create new `AccessKey` and `SecretAccessKey` pair.
+
+#### Create Publisher API
+
+1. Create new .NET 6 Web API project `MySqsQueuePublisher.API`
+
+2. Create new `MayaRequest.cs`
+
+3. Create new `MayaController.cs` that injects `ISqsQueueService` through its constructor
+
+4. Create new `SqsQueueService.cs`:
+
+```
+    public class SqsQueueService : ISqsQueueService
+    {
+        private readonly IConfiguration _configuration;
+
+        public SqsQueueService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public async Task<bool> PublishToAwsSqsQueueAsync(string body)
+        {
+            var sqsClient = new AmazonSQSClient();
+
+            await SendMessage(sqsClient, _configuration.GetValue<string>("MySqsQueueTestUrl"), body);
+
+            return true;
+        }
+
+        private static async Task SendMessage(IAmazonSQS sqsClient, string sqsUrl, string messageBody) { ... }
+    }
+```
+
+5. Register `SqsQueueService` in `Program.cs`:
+
+```
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddTransient<ISqsQueueService, SqsQueueService>();
+
+            ...
+
+            app.Run();
+        }
+    }
+```
+
+#### Create Consumer API
+
+1. Create new .NET 6 Web API project `MySqsQueueConsumer.API`
+
+2. Create new `SqsConsumer`:
+
+```
+    public class SqsConsumer : BackgroundService
+    {
+        private readonly IConfiguration _configuration;
+
+        public SqsConsumer(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken) { ... }
+
+        private static async Task Start(IAmazonSQS client, string queueUrl, CancellationToken stoppingToken) { ... }
+
+        private static bool ProcessMessage(Message msg) { ... }
+
+        private IAmazonSQS CreateClient() { ... }
+
+        private static async Task<string> GetQueueUrl(IAmazonSQS client, string queueName) { ... }
+
+        private static async Task<List<Message>> ReceiveMessageAsync(IAmazonSQS client, string queueUrl, int maxMessages = 1) { ... }
+
+        private static async Task DeleteMessageAsync(IAmazonSQS client, string queueUrl, string id) { ... }
+    }
+```
+
+3. Add `SqsConsumer` as Hosted Service in `Program.cs`:
+
+```
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddHostedService<SqsConsumer>();
+
+            ...
+        }
+    }
+```
+
+4. Take `AccessKey`, `SecretAccessKey` from step 2 and add them along with `MySqsQueueTestUrl` in `appsettings.json`:
+
+```
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "MySqsQueueTestUrl": "my-sqs-queue-test",
+  "AccessKey": "...",
+  "SecretAccessKey": "..."
+}
+
+```
+
+#### Test
+
+Publish:
+![Publish](./res/images/MySqsQueuePublisher.API_request.png)
+
+Consume:
+![Consume](./res/images/MySqsQueueConsumer.API_consume.png)
+
+## SQS Queue Web API Producer with Lambda Consumer
+
+### Architecture
 
 ![Workflow](res/images/workflow.jpg)
 
----
+### Setup
 
-<a name="setup" ></a>
-
-## Setup
-
-<a name="aws-sqs-queue-setup" ></a>
-
-### AWS SQS Queue Setup
+#### AWS SQS Queue Setup
 
 In the aws.amazon.com UI, create a new SQS Queue.  
 With the UI, one can send a message.  
@@ -46,8 +190,6 @@ aws sqs receive-message --queue-url https://sqs.eu-central-1.amazonaws.com/{id}/
 Copy the URL of the SQS Queue and place it as a 'AwsSqsQueueUrl' variable in the Web API's appsettings.json.
 
 ---
-
-<a name="web-api-setup" ></a>
 
 ### Web API Setup
 
@@ -86,8 +228,6 @@ You should now be able to find all sent requests to Web API in the SQS Queue.
 You can get such messages from the queue using the aws command mentioned in section [AWS SQS Queue Setup](#aws-sqs-queue-setup).
 
 ---
-
-<a name="aws-lambda-setup" ></a>
 
 #### AWS Lambda Setup
 

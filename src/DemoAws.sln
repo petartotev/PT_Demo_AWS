@@ -3,13 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsSqsQueueProducer.API", "AwsSqsQueueProducer\AwsSqsQueueProducer.API\AwsSqsQueueProducer.API.csproj", "{8F0D8CFA-68FF-46CA-AF03-2F9FF0A76E45}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSqsQueueProducer.API", "AwsSqsQueueProducer\AwsSqsQueueProducer.API\AwsSqsQueueProducer.API.csproj", "{8F0D8CFA-68FF-46CA-AF03-2F9FF0A76E45}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSqsQueueProducer.Contracts", "AwsSqsQueueProducer\AwsSqsQueueProducer.Contracts\AwsSqsQueueProducer.Contracts.csproj", "{ADE22567-693F-493F-8C74-3CCEF25E7692}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSqsQueueConsumerLambda", "AwsSqsQueueConsumer\AwsSqsQueueConsumerLambda\src\AwsSqsQueueConsumerLambda\AwsSqsQueueConsumerLambda.csproj", "{608F8CD9-1B07-41C6-8F78-AE4511E58AEE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSqsQueueConsumerLambda.Tests", "AwsSqsQueueConsumer\AwsSqsQueueConsumerLambda\test\AwsSqsQueueConsumerLambda.Tests\AwsSqsQueueConsumerLambda.Tests.csproj", "{49056106-C4D3-454B-A0DF-6A1A48FD7935}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqsQueuePublisher.API", "MySqsQueuePublisher.API\MySqsQueuePublisher.API.csproj", "{F0304469-636B-4630-A5A6-67102398D470}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqsQueueConsumer.API", "MySqsQueueConsumer.API\MySqsQueueConsumer.API.csproj", "{2FD9313D-1A13-4092-8EF4-1AE675F8985C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +37,14 @@ Global
 		{49056106-C4D3-454B-A0DF-6A1A48FD7935}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49056106-C4D3-454B-A0DF-6A1A48FD7935}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49056106-C4D3-454B-A0DF-6A1A48FD7935}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0304469-636B-4630-A5A6-67102398D470}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0304469-636B-4630-A5A6-67102398D470}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0304469-636B-4630-A5A6-67102398D470}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0304469-636B-4630-A5A6-67102398D470}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FD9313D-1A13-4092-8EF4-1AE675F8985C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FD9313D-1A13-4092-8EF4-1AE675F8985C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FD9313D-1A13-4092-8EF4-1AE675F8985C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FD9313D-1A13-4092-8EF4-1AE675F8985C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
