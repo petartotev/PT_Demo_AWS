@@ -4,24 +4,31 @@
 
 - [General Information](#general-information)
 - [SQS Queue Web API Producer with Web API Consumer](#sqs-queue-web-api-producer-with-web-api-consumer)
+    - [Architecture](#architecture)
     - [Setup](#setup)
         - [Create SQS Queue in AWS](#create-sqs-queue)
         - [Create (Secret)AccessKey in AWS](#create-secretaccesskey-in-aws)
         - [Create MySqsQueuePublisher.API](#create-publisher-api)
         - [Create MySqsQueueConsumer.API](#create-consumer-api)
         - [Test](#test)
+        - [Remove AWS Resources](#remove-aws-resources)
 - [SQS Queue Web API Producer with Lambda Consumer](#sqs-queue-web-api-producer-with-lambda-consumer)
-    - [Architecture](#architecture)
+    - [Architecture](#architecture-1)
     - [Setup](#setup-1)
         - [AWS SQS Queue Setup](#aws-sqs-queue-setup)
         - [Web API Setup](#web-api-setup)
         - [AWS Lambda Setup](#aws-lambda-setup)
+- [Links](#links)
 
 ## General Information
 
 PT_Demo_AWS is a demo project to test both Lambdas and SQS Queues.
 
 ## SQS Queue Web API Producer with Web API Consumer
+
+### Architecture
+
+![Architecture](./res/images/MySqsQueueArchitecture.jpg)
 
 ### Setup
 
@@ -169,6 +176,11 @@ Publish:
 Consume:
 ![Consume](./res/images/MySqsQueueConsumer.API_consume.png)
 
+#### Remove AWS Resources
+
+1. Delete the SQS Queue
+2. Delete the AccessKey / SecretAccessKey through the AWS Management Console
+
 ## SQS Queue Web API Producer with Lambda Consumer
 
 ### Architecture
@@ -282,3 +294,7 @@ dotnet lambda deploy-function {project-name} --add-source https://api.nuget.org/
 
 9. Now every Post request you send to Web API should be processed and sent as a message to an AWS SQS Queue. This message should be processed by the AWS Lambda and sent via an email client to your personal email.  
 That's it.
+
+## Links
+
+- https://medium.com/nuages-org/aws-sqs-background-service-net-5-part-1-63e3e730e3a2
