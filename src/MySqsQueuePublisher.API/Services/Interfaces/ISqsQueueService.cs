@@ -1,7 +1,6 @@
-﻿namespace MySqsQueuePublisher.API.Services.Interfaces
+﻿namespace MySqsQueuePublisher.API.Services.Interfaces;
+
+public interface ISqsQueueService
 {
-    public interface ISqsQueueService
-    {
-        public Task<bool> PublishToAwsSqsQueueAsync(string body);
-    }
+    public Task<bool> PublishToAwsSqsQueueAsync(string body);
 }

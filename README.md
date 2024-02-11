@@ -201,9 +201,7 @@ aws sqs receive-message --queue-url https://sqs.eu-central-1.amazonaws.com/{id}/
 
 Copy the URL of the SQS Queue and place it as a 'AwsSqsQueueUrl' variable in the Web API's appsettings.json.
 
----
-
-### Web API Setup
+#### Web API Setup
 
 Run AwsSqsQueueProducer.API locally on port 5194: http://localhost:5194 .
 

@@ -3,123 +3,122 @@ using Amazon.Runtime;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 
-namespace MySqsQueueConsumer.API.Consumers
+namespace MySqsQueueConsumer.API.Consumers;
+
+public class SqsConsumer : BackgroundService
 {
-    public class SqsConsumer : BackgroundService
+    private readonly IConfiguration _configuration;
+
+    public SqsConsumer(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
+        _configuration = configuration;
+    }
 
-        public SqsConsumer(IConfiguration configuration)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var client = CreateClient();
+
+        var queueName = _configuration.GetValue<string>("MySqsQueueTestUrl");
+        var queueUrl = await GetQueueUrl(client, queueName);
+
+        await Start(client, queueUrl, stoppingToken);
+    }
+
+    private static async Task Start(IAmazonSQS client, string queueUrl, CancellationToken stoppingToken)
+    {
+        Console.WriteLine($"Starting polling queue at {queueUrl}");
+
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _configuration = configuration;
-        }
+            var messages = await ReceiveMessageAsync(client, queueUrl, 10);
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            var client = CreateClient();
-
-            var queueName = _configuration.GetValue<string>("MySqsQueueTestUrl");
-            var queueUrl = await GetQueueUrl(client, queueName);
-
-            await Start(client, queueUrl, stoppingToken);
-        }
-
-        private static async Task Start(IAmazonSQS client, string queueUrl, CancellationToken stoppingToken)
-        {
-            Console.WriteLine($"Starting polling queue at {queueUrl}");
-
-            while (!stoppingToken.IsCancellationRequested)
+            if (messages.Any())
             {
-                var messages = await ReceiveMessageAsync(client, queueUrl, 10);
+                Console.WriteLine($"{messages.Count} messages received");
 
-                if (messages.Any())
+                foreach (var msg in messages)
                 {
-                    Console.WriteLine($"{messages.Count} messages received");
+                    var result = ProcessMessage(msg);
 
-                    foreach (var msg in messages)
+                    if (result)
                     {
-                        var result = ProcessMessage(msg);
-
-                        if (result)
-                        {
-                            Console.WriteLine($"{msg.MessageId} processed with success");
-                            await DeleteMessageAsync(client, queueUrl, msg.ReceiptHandle);
-                        }
+                        Console.WriteLine($"{msg.MessageId} processed with success");
+                        await DeleteMessageAsync(client, queueUrl, msg.ReceiptHandle);
                     }
                 }
-                else
-                {
-                    Console.WriteLine("No message available");
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                }
+            }
+            else
+            {
+                Console.WriteLine("No message available");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
+    }
 
-        private static bool ProcessMessage(Message msg)
+    private static bool ProcessMessage(Message msg)
+    {
+        Console.WriteLine(msg.Body);
+
+        return true;
+    }
+
+    private IAmazonSQS CreateClient()
+    {
+        //This is a simple scenario, you might want to use DI instead. Please refere to documentation for options
+
+        var accessKey = _configuration.GetValue<string>("AccessKey");
+        var secretKey = _configuration.GetValue<string>("SecretAccessKey");
+        var region = RegionEndpoint.EUCentral1;
+
+        var credentials = new BasicAWSCredentials(accessKey, secretKey);
+
+        return new AmazonSQSClient(credentials, region);
+    }
+
+    private static async Task<string> GetQueueUrl(IAmazonSQS client, string queueName)
+    {
+        try
         {
-            Console.WriteLine(msg.Body);
-
-            return true;
-        }
-
-        private IAmazonSQS CreateClient()
-        {
-            //This is a simple scenario, you might want to use DI instead. Please refere to documentation for options
-
-            var accessKey = _configuration.GetValue<string>("AccessKey");
-            var secretKey = _configuration.GetValue<string>("SecretAccessKey");
-            var region = RegionEndpoint.EUCentral1;
-
-            var credentials = new BasicAWSCredentials(accessKey, secretKey);
-
-            return new AmazonSQSClient(credentials, region);
-        }
-
-        private static async Task<string> GetQueueUrl(IAmazonSQS client, string queueName)
-        {
-            try
+            var response = await client.GetQueueUrlAsync(new GetQueueUrlRequest
             {
-                var response = await client.GetQueueUrlAsync(new GetQueueUrlRequest
-                {
-                    QueueName = queueName
-                });
+                QueueName = queueName
+            });
 
-                return response.QueueUrl;
-            }
-            catch (QueueDoesNotExistException)
-            {
-                //You might want to add additionale exception handling here because that may fail
-                var response = await client.CreateQueueAsync(new CreateQueueRequest
-                {
-                    QueueName = queueName
-                });
-
-                return response.QueueUrl;
-            }
+            return response.QueueUrl;
         }
-
-        private static async Task<List<Message>> ReceiveMessageAsync(IAmazonSQS client, string queueUrl, int maxMessages = 1)
+        catch (QueueDoesNotExistException)
         {
-            var request = new ReceiveMessageRequest
+            //You might want to add additionale exception handling here because that may fail
+            var response = await client.CreateQueueAsync(new CreateQueueRequest
             {
-                QueueUrl = queueUrl,
-                MaxNumberOfMessages = maxMessages
-            };
+                QueueName = queueName
+            });
 
-            var messages = await client.ReceiveMessageAsync(request);
-
-            return messages.Messages;
+            return response.QueueUrl;
         }
+    }
 
-        private static async Task DeleteMessageAsync(IAmazonSQS client, string queueUrl, string id)
+    private static async Task<List<Message>> ReceiveMessageAsync(IAmazonSQS client, string queueUrl, int maxMessages = 1)
+    {
+        var request = new ReceiveMessageRequest
         {
-            var request = new DeleteMessageRequest
-            {
-                QueueUrl = queueUrl,
-                ReceiptHandle = id
-            };
+            QueueUrl = queueUrl,
+            MaxNumberOfMessages = maxMessages
+        };
 
-            await client.DeleteMessageAsync(request);
-        }
+        var messages = await client.ReceiveMessageAsync(request);
+
+        return messages.Messages;
+    }
+
+    private static async Task DeleteMessageAsync(IAmazonSQS client, string queueUrl, string id)
+    {
+        var request = new DeleteMessageRequest
+        {
+            QueueUrl = queueUrl,
+            ReceiptHandle = id
+        };
+
+        await client.DeleteMessageAsync(request);
     }
 }
